@@ -29,7 +29,6 @@ Phase 1 ─ Greedy Seeds
           ① skill ÷ (degree + 1)  ratio  (best all-round)
           ② raw skill  (descending)
           ③ degree     (ascending — low-conflict nodes first)
-          ④ random shuffle
           Keep the best solution found.
 
 Phase 2 ─ 1-Swap Local Search
@@ -53,7 +52,7 @@ Phase 3 ─ Iterated Greedy  (runs until 280 s elapsed)
 | Phase | Time per iteration |
 |---|---|
 | Greedy seed | O(N log N + M) |
-| 1-swap pass | O(N · avg_degree · log N) |
+| 1-swap pass | O(N · avg_degree²) |
 | Iterated Greedy rebuild | O(N log N + M) |
 
 For **sparse** graphs (typical for hackathon inputs) all phases are fast enough to run hundreds of iterations in the 5-minute window.
