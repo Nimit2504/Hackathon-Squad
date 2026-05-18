@@ -14,9 +14,6 @@
  *      Escapes local optima that 1-swap alone cannot cross.
  *      Runs until the 5-minute wall.
  *
- * Key design: conflictCnt[u] = # selected neighbours of u.
- *   canAdd(u) is O(1) — just check conflictCnt[u] == 0.
- *   add / remove update conflictCnt in O(degree).
  */
 
 #include <bits/stdc++.h>
@@ -81,8 +78,8 @@ Solution greedyBuild(const vector<int>& order) {
     return sol;
 }
 
-// mode 0: skill/(deg+1) ratio   mode 1: raw skill   mode 2: degree asc   mode 3: random
-vector<int> makeOrder(int mode, mt19937& rng) {
+// mode 0: skill/(deg+1) ratio   mode 1: raw skill   mode 2: degree ascending
+vector<int> makeOrder(int mode) {
     vector<int> order(N);
     iota(order.begin(), order.end(), 1);
     if (mode == 0) {
@@ -94,12 +91,10 @@ vector<int> makeOrder(int mode, mt19937& rng) {
         sort(order.begin(), order.end(), [](int a, int b) {
             return skill[a] > skill[b];
         });
-    } else if (mode == 2) {
+    } else {
         sort(order.begin(), order.end(), [](int a, int b) {
             return deg[a] < deg[b];
         });
-    } else {
-        shuffle(order.begin(), order.end(), rng);
     }
     return order;
 }
@@ -174,7 +169,7 @@ void iteratedGreedy(Solution& best, mt19937& rng) {
     double destroyRate  = 0.25;
     int    noImprove    = 0;
 
-    auto ratioOrder = makeOrder(0, rng);  // pre-sort once; reused every rebuild
+    auto ratioOrder = makeOrder(0);  // pre-sort once; reused every rebuild
 
     while (elapsed() < 275) {
         // ── Destroy ──────────────────────────────────────────────────────────
@@ -206,13 +201,13 @@ void iteratedGreedy(Solution& best, mt19937& rng) {
             noImprove++;
         }
 
-        // Widen the destroy window if stuck — explore further away
+        // Widen the destroy window if stuck — explore further away.
+        // Once we've exhausted the full range (0.25 → 0.55) with no gain,
+        // the landscape is flat and we stop.
         if (noImprove > 30) {
-            destroyRate = min(0.60, destroyRate + 0.05);
-            noImprove   = 0;
-            // If already at max destroy rate and still no improvement,
-            // the landscape is flat — no point continuing
-            if (destroyRate >= 0.60) break;
+            if (destroyRate >= 0.55) break;
+            destroyRate += 0.05;
+            noImprove    = 0;
         }
     }
 }
@@ -241,7 +236,7 @@ int main() {
 
     // ── Phase 1: Three greedy seeds + local search ────────────────────────────
     for (int mode = 0; mode < 3 && elapsed() < 60; mode++) {
-        auto order = makeOrder(mode, rng);
+        auto order = makeOrder(mode);
         Solution s = greedyBuild(order);
         s.fillFreeNodes();
         localSearch(s);
